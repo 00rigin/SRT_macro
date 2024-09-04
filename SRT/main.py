@@ -5,8 +5,8 @@ import random as rd
 import sys
 import os
 
-ID = '1897297188'
-PASSWORD = 'codeis007!'
+ID = '아이디'
+PASSWORD = '비밀번호'
 DEPARTURE = '익산'
 ARRIVAL = '수서'
 TARGET_DATE = '20240918'
