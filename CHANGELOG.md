@@ -1,9 +1,46 @@
 ## Unreleased
 
+## v2.6.4 (2025/01/05)
+
+- 예매시 netfunnel 관련 오류 수정
+  ([#280](https://github.com/ryanking13/SRT/pull/280))
+
+- 경주역 역명 업데이트
+  ([#285](https://github.com/ryanking13/SRT/pull/285))
+
+## v2.6.3 (2024/12/27)
+
+- netfunnel 관련 토큰 발급 오류 수정
+  ([#283](https://github.com/ryanking13/SRT/pull/283))
+
+## v2.6.2 (2024/12/23)
+
+- netfunnel 관련 토큰 발급이 이미 완료된 경우에 대한 처리
+  ([#278](https://github.com/ryanking13/SRT/pull/278))
+
+## v2.6.1 (2024/12/13)
+
+- netfunnel 관련 오류 추가 수정
+  ([#276](https://github.com/ryanking13/SRT/pull/276))
+  ([#277](https://github.com/ryanking13/SRT/pull/277))
+
+- 신규 열차 및 역이 추가되었을 때 오류가 발생하지 않도록 수정
+  ([#276](https://github.com/ryanking13/SRT/pull/276))
+
+## v2.6.0 (2024/12/13) [yanked]
+
+- netfunnel 관련 오류 수정
+  ([#272](https://github.com/ryanking13/SRT/pull/272))
+
+## v2.5.0 (2024/08/26)
+
+- 잘못된 승객 타입이 지정되는 문제 수정
+  ([#267](https://github.com/ryanking13/SRT/pull/267))
+
 ## v2.4.1 (2024/02/09)
 
 - Add exception handling
-  ([#259](https://github.com/ryanking13/SRT/issues/259))
+  ([#259](https://github.com/ryanking13/SRT/pull/259))
 
 ## v2.4.0 (2024/01/11)
 

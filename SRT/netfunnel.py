@@ -17,6 +17,7 @@ class NetFunnelHelper:
 
     WAIT_STATUS_PASS = "200"  # No need to wait
     WAIT_STATUS_FAIL = "201"  # Need to wait
+    ALREADY_COMPLETED = "502"  # already completed(set-complete)
 
     DEFAULT_HEADERS = {
         "User-Agent": USER_AGENT,
@@ -44,8 +45,10 @@ class NetFunnelHelper:
     def _get_netfunnel_key(self, use_cache: bool):
         """
         NetFunnel 키를 요청합니다.
+
         Args:
             use_cache (bool): 캐시 사용 여부, 캐시 사용 시 이전 요청에서 반환한 키를 반환합니다.
+
         Returns:
             str: NetFunnel 키
         """
@@ -88,6 +91,7 @@ class NetFunnelHelper:
         self._cached_key = netfunnel_key
 
         return netfunnel_key
+
     def _wait_until_complete(self, key: str, nwait: str) -> str:
         """
         NetFunnel이 완료될 때까지 대기합니다.
@@ -129,10 +133,12 @@ class NetFunnelHelper:
 
             return self._wait_until_complete(key_, nwait_)
         else:
-            return key
+            return key_
+
     def _set_complete(self, key: str):
         """
         NetFunnel 완료 요청을 보냅니다.
+
         Args:
             key (str): NetFunnel 키
         """
@@ -156,16 +162,21 @@ class NetFunnelHelper:
             raise SRTNetFunnelError(e) from e
 
         netfunnel_resp = NetFunnelResponse.parse(resp.text)
-        if netfunnel_resp.get("status") != self.WAIT_STATUS_PASS:
+        if netfunnel_resp.get("status") not in [
+            self.WAIT_STATUS_PASS,
+            self.ALREADY_COMPLETED,
+        ]:
             raise SRTNetFunnelError(f"Failed to complete NetFunnel: {netfunnel_resp}")
 
     def _get_timestamp_for_netfunnel(self):
         return int(time.time() * 1000)
 
+
 class NetFunnelResponse:
     """
     Represents a NetFunnel response.
     """
+
     OP_CODE_KEY = "NetFunnel.gRtype"
     RESULT_KEY = "NetFunnel.gControl.result"
 
@@ -179,6 +190,7 @@ class NetFunnelResponse:
         "port",
         "msg",
     ]
+
     def __init__(self, response: str, data: dict[str, str]):
         self.response = response
         self.data = data
@@ -186,8 +198,10 @@ class NetFunnelResponse:
     @classmethod
     def parse(cls, response: str) -> "NetFunnelResponse":
         """
-         The factory method to create a NetFunnelResponse object from a response string.
+        The factory method to create a NetFunnelResponse object from a response string.
+
         the response string will be in the format of:
+
         ```
         NetFunnel.gRtype=5101;
         NetFunnel.gControl.result='5002:201:key=<key>&nwait=3&nnext=1&tps=11.247706&ttl=1&ip=<ip>&port=80';
@@ -223,7 +237,9 @@ class NetFunnelResponse:
                             break
 
         return cls(response, data)
+
     def get(self, key: str) -> str | None:
         return self.data.get(key)
+
     def __str__(self):
         return self.response

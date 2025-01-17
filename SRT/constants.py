@@ -17,7 +17,8 @@ STATION_CODE = {
     "부산": "0020",
     "서대구": "0506",
     "순천": "0051",
-    "신경주": "0508",
+    "신경주": "0508",  # for backward compatibility
+    "경주": "0508",
     "여수EXPO": "0053",
     "여천": "0139",
     "오송": "0297",
@@ -64,6 +65,7 @@ API_ENDPOINTS = {
     "standby_option": f"{SRT_MOBILE}/ata/selectListAta01135_n.do",
     "payment": f"{SRT_MOBILE}/ata/selectListAta09036_n.do",
 }
+
 USER_AGENT = (
     "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0_1 like Mac OS X) AppleWebKit/605.1.15 "
     "(KHTML, like Gecko) Mobile/15E148 SRT-APP-iOS V.2.0.18"

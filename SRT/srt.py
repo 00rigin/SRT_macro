@@ -47,12 +47,12 @@ class SRT:
     """
 
     def __init__(
-            self,
-            srt_id: str,
-            srt_pw: str,
-            auto_login: bool = True,
-            verbose: bool = False,
-            netfunnel_helper: NetFunnelHelper | None = None,
+        self,
+        srt_id: str,
+        srt_pw: str,
+        auto_login: bool = True,
+        verbose: bool = False,
+        netfunnel_helper: NetFunnelHelper | None = None,
     ) -> None:
         self._session = requests.session()
         self._session.headers.update(DEFAULT_HEADERS)
@@ -206,24 +206,25 @@ class SRT:
             arr_code=arr_code,
             dep_code=dep_code,
             available_only=available_only,
-            use_netfunnel_cache=False,
+            use_netfunnel_cache=True,
         )
 
         return trains
 
     def _search_train(
-            self,
-            dep: str,
-            arr: str,
-            date: str | None = None,
-            time: str | None = None,
-            time_limit: str | None = None,
-            arr_code: str | None = None,
-            dep_code: str | None = None,
-            available_only: bool = True,
-            use_netfunnel_cache: bool = False,
+        self,
+        dep: str,
+        arr: str,
+        date: str | None = None,
+        time: str | None = None,
+        time_limit: str | None = None,
+        arr_code: str | None = None,
+        dep_code: str | None = None,
+        available_only: bool = True,
+        use_netfunnel_cache: bool = True,
     ) -> list[SRTTrain]:
         """netfunnel_key를 발급받아 열차를 검색하는 내부 함수입니다.
+
         Args:
             dep (str): 출발역
             arr (str): 도착역
@@ -234,6 +235,7 @@ class SRT:
             dep_code (str, optional): 출발역 코드
             available_only (bool, optional): 매진되지 않은 열차만 검색합니다 (default: True)
             use_netfunnel_cache (bool, optional): netfunnel 캐시 사용 여부, 사용하지 않으면 요청 시마다 새로 netfunnel 키를 요청합니다 (default: True)
+
         Returns:
             list[:class:`SRTTrain`]: 열차 리스트
         """
@@ -270,6 +272,7 @@ class SRT:
             message_code = parser.message_code()
             if message_code == INVALID_NETFUNNEL_KEY and use_netfunnel_cache:
                 self._log(f"Invalid netfunnel key: {netfunnelKey}, regenerating...")
+
                 return self._search_train(
                     dep=dep,
                     arr=arr,
@@ -320,7 +323,7 @@ class SRT:
         self,
         train: SRTTrain,
         passengers: list[Passenger] | None = None,
-        special_seat: SeatType = SeatType.GENERAL_ONLY,
+        special_seat: SeatType = SeatType.GENERAL_FIRST,
         window_seat: bool | None = None,
     ) -> SRTReservation:
         """열차를 예약합니다.
@@ -344,6 +347,7 @@ class SRT:
             passengers,
             special_seat,
             window_seat=window_seat,
+            use_netfunnel_cache=True,
         )
 
     def reserve_standby(
@@ -380,6 +384,7 @@ class SRT:
         special_seat: SeatType = SeatType.GENERAL_FIRST,
         mblPhone: str | None = None,
         window_seat: bool | None = None,
+        use_netfunnel_cache: bool = True,
     ) -> SRTReservation:
         """예약 신청 요청 공통 함수
 
@@ -389,6 +394,7 @@ class SRT:
             special_seat (:class:`SeatType`): 일반실/특실 선택 유형 (default: 일반실 우선)
             mblPhone (str, optional): 휴대폰 번호 | jobid가 RESERVE_JOBID["STANDBY"]일 경우에만 사용
             window_seat (bool, optional): 창가 자리 우선 예약 여부 | jobid가 RESERVE_JOBID["PERSONAL"]일 경우에만 사용
+            use_netfunnel_cache (bool, optional): netfunnel 캐시 사용 여부, 사용하지 않으면 요청 시마다 새로 netfunnel 키를 요청합니다 (default: True)
 
         Returns:
             :class:`SRTReservation`: 예약 내역
@@ -408,9 +414,6 @@ class SRT:
             passengers = [Adult()]
         passengers = Passenger.combine(passengers)
 
-        if passengers is not None:
-            passengersCount = len(passengers)
-
         # 일반식 / 특실 좌석 선택 옵션에 따라 결정.
         is_special_seat = None
         if special_seat == SeatType.GENERAL_ONLY:  # 일반실만
@@ -427,6 +430,8 @@ class SRT:
                 is_special_seat = True
             else:
                 is_special_seat = False
+
+        netfunnelKey = self.netfunnel_helper.generate_netfunnel_key(use_netfunnel_cache)
 
         url = constants.API_ENDPOINTS["reserve"]
         data = {
@@ -447,43 +452,29 @@ class SRT:
             "dptDt1": train.dep_date,  # 출발일자1 (열차 목록 값)
             "dptTm1": train.dep_time,  # 출발일자1 (열차 목록 값)
             "arvTm1": train.arr_time,  # 도착일자1 (열차 목록 값)
-            "totPrnb": passengersCount,  # 승차인원
-            "psgGridcnt": passengersCount,  # 승차인원
-            "psgTpCd1": passengersCount,  # 승차인원
-            "psgInfoPerPrnb1": passengersCount,  # 승차인원
             "trnNo1": "%05d" % int(train.train_number),  # 열차번호1 (열차 목록 값)
             "runDt1": train.dep_date,  # 운행일자1 (열차 목록 값)
-            "psrmClCd1": "2" if is_special_seat is True else "1",
             "dptStnConsOrdr1": train.dep_station_constitution_order,  # 출발역구성순서1 (열차 목록 값)
             "arvStnConsOrdr1": train.arr_station_constitution_order,  # 도착역구성순서1 (열차 목록 값)
             "dptStnRunOrdr1": train.dep_station_run_order,  # 출발역운행순서1 (열차 목록 값)
             "arvStnRunOrdr1": train.arr_station_run_order,  # 도착역운행순서1 (열차 목록 값)
-            "smkSeatAttCd1": "000",  # 흡연좌석속성코드1
-            "dirSeatAttCd1": "009",  # 방향좌석속성코드
-            "locSeatAttCd1": "000",  # 위치좌석속성코드1
-            "rqSeatAttCd1": "015",  # 요구좌석속성코드1
-            "etcSeatAttCd1": "000",  # 기타좌석속성코드1
-            "smkSeatAttCd2": "000",  # 흡연좌석속성코드2
-            "dirSeatAttCd2": "009",  # 방향좌석속성코드2
-            "rqSeatAttCd2": "015",  # 요구좌석속성코드2
             "mblPhone": mblPhone,
+            "netfunnelKey": netfunnelKey,
         }
 
         # jobid가 RESERVE_JOBID["PERSONAL"]일 경우, data에 reserveType 추가
         if jobid == RESERVE_JOBID["PERSONAL"]:
             data.update(
                 {
-                    "reserveType": "1",
+                    "reserveType": "11",
                 }
             )
 
-        # jobid가 RESERVE_JOBID["PERSONAL"]일 경우, data에 windowSeat 추가
-        if jobid == RESERVE_JOBID["PERSONAL"]:
-            data.update(
-                Passenger.get_passenger_dict(
-                    passengers, special_seat=is_special_seat, window_seat=window_seat
-                )
+        data.update(
+            Passenger.get_passenger_dict(
+                passengers, special_seat=is_special_seat, window_seat=window_seat
             )
+        )
 
         r = self._session.post(url=url, data=data)
         parser = SRTResponseData(r.text)
@@ -570,7 +561,9 @@ class SRT:
         pay_data = parser.get_all()["payListMap"]
         reservations = []
         for train, pay in zip(train_data, pay_data):
-            if paid_only and pay["stlFlg"] == "N":  # paid_only가 참이면 결제된 예약내역만 보여줌
+            if (
+                paid_only and pay["stlFlg"] == "N"
+            ):  # paid_only가 참이면 결제된 예약내역만 보여줌
                 continue
             ticket = self.ticket_info(train["pnrNo"])
             reservation = SRTReservation(train, pay, ticket)

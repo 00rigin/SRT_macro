@@ -18,7 +18,6 @@ class SRTTrain(Train):
         self.dep_station_name = STATION_NAME.get(
             self.dep_station_code, "알 수 없는 역 코드 (업데이트 필요)"
         )
-        self.dep_station_name = STATION_NAME[self.dep_station_code]
         self.arr_date = data["arvDt"]
         self.arr_time = data["arvTm"]
         self.arr_station_code = data["arvRsStnCd"]
@@ -60,7 +59,9 @@ class SRTTrain(Train):
             arr_min=self.arr_time[2:4],
             special_state=self.special_seat_state,
             general_state=self.general_seat_state,
-            reserve_standby_state="가능" if self.reserve_standby_available() else "불가능",
+            reserve_standby_state=(
+                "가능" if self.reserve_standby_available() else "불가능"
+            ),
         )
 
         return d
@@ -72,7 +73,9 @@ class SRTTrain(Train):
         return "예약가능" in self.special_seat_state
 
     def reserve_standby_available(self):
-        return "9" in self.reserve_wait_possible_code  # 9인 경우, 예약대기 가능한 상태임
+        return (
+            "9" in self.reserve_wait_possible_code
+        )  # 9인 경우, 예약대기 가능한 상태임
 
     def seat_available(self):
         return self.general_seat_available() or self.special_seat_available()
