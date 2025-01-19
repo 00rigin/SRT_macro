@@ -12,11 +12,11 @@ class SRTResponseData:
     STATUS_FAIL = "FAIL"
 
     def __init__(self, response):
-        try:
-            self._json = json.loads(response)
-        except json.JSONDecodeError:
-            print("\nAPI Fail : ", response)
-            raise
+
+        if "ErrorMsg" not in response :
+            print(response)
+
+        self._json = json.loads(response)
         self._status = {}
 
         # parse response data
@@ -52,6 +52,7 @@ class SRTResponseData:
 
     def message(self):
         return self._status.get("msgTxt", "")
+
     def message_code(self):
         return self._status.get("msgCd", "")
 
